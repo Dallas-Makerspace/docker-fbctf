@@ -1,28 +1,44 @@
-mysql:
-  restart: always
-  image: mysql:5.5
-  environment:
-    - MYSQL_ROOT_PASSWORD=root
-    - MYSQL_DATABASE=fbctf
-    - MYSQL_USER=fbctf
-    - MYSQL_PASSWORD=fbctf
-memcached:
-  restart: always
-  image: memcached
-fbctf:
-  restart: always
-  image: alexgaspar/fbctf
-  links:
-    - memcached:memcached
-    - mysql:mysql
-  environment:
-    - MYSQL_HOST=mysql
-    - MYSQL_PORT=3306
-    - MYSQL_DATABASE=fbctf
-    - MYSQL_USER=fbctf
-    - MYSQL_PASSWORD=fbctf
-    - MEMCACHED_PORT=11211
-    - SSL_SELF_SIGNED=true
-  ports:
-    - "80:80"
-    - "443:443"
+---
+version: '3.4'
+services:
+  mysql:
+    restart: always
+    image: mysql:5.5
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_SECRET}
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_SECRET}
+  networks:
+     - bridge
+
+  memcached:
+    restart: always 
+    image: memcached
+    networks:
+     - bridge
+     
+  fbctf:
+    restart: always
+    image: alexgaspar/fbctf:latest
+    links:
+      - memcached:memcached
+      - mysql:mysql
+    environment:
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_SECRET}
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_SECRET}
+      - MEMCACHED_PORT=11211
+      - SSL_SELF_SIGNED=true
+      - VIRTUAL_HOST=ctf.communitygrid.dallasmakerspace.org
+      - VIRTUAL_PORT=80
+    networks:
+     - bridge
+     
+networks:
+  bridge:
+    external:
+      name: bridge
