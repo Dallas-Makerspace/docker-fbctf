@@ -8,16 +8,22 @@ services:
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_SECRET}
       - MYSQL_DATABASE=${DB_NAME}
       - MYSQL_USER=${DB_USER}
-      - MYSQL_PASSWORD=${DB_SECRET}
+      - MYSQL_PASSWORD=${DB_SECRET}  
+    network_mode: "service:fbctf"
+    networks:
+      database:
+        aliases:
+          - mysql
 
   memcached:
     restart: always 
-    image: memcached
-  network
+    image: memcached:latest
+    network_mode: "service:fbctf"
      
   fbctf:
     restart: always
     image: alexgaspar/fbctf:latest
+    network_mode: "bridge"
     links:
       - memcached:memcached
       - mysql:mysql
@@ -32,8 +38,12 @@ services:
       - SSL_SELF_SIGNED=true
       - VIRTUAL_HOST=ctf.communitygrid.dallasmakerspace.org
       - VIRTUAL_PORT=80
+    networks:
+      - database
+      - bridge
 
 networks:
-  default:
+  database:
+  bridge:
     external:
       name: bridge
