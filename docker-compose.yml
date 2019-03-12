@@ -2,7 +2,9 @@
 version: '3.4'
 services:
   mysql:
-    restart: always
+    deploy:
+      restart_policy:
+        condition: "on-failure"
     image: mysql:5.5
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_SECRET}
@@ -10,18 +12,36 @@ services:
       - MYSQL_USER=${DB_USER}
       - MYSQL_PASSWORD=${DB_SECRET}  
     network_mode: "service:fbctf"
+    volumes:
+      - dbdata:/var/lib/mysql
     networks:
       database:
         aliases:
           - mysql
 
+
+  db_archive:
+    deploy:
+      restart_policy:
+        condition: "on-failure"
+    image: blacklabelops/volumize:latest
+    volumes:
+      - dbdata:/var/lib/mysql:ro
+      - backupdata:/backup
+    environment:
+      VOLUMERIZE_SOURCE=/var/lib/mysql
+      VOLUMEIZE_TARGET=file:///backup
+      VOLUMEIZE_JOBBER_TIME="@weekly"
+        
   memcached:
     restart: always 
     image: memcached:latest
     network_mode: "service:fbctf"
      
   fbctf:
-    restart: always
+    deploy:
+      restart_policy:
+        condition: "on-failure"
     image: alexgaspar/fbctf:latest
     network_mode: "bridge"
     links:
@@ -36,7 +56,7 @@ services:
       - MYSQL_PASSWORD=${DB_SECRET}
       - MEMCACHED_PORT=11211
       - SSL_SELF_SIGNED=true
-      - VIRTUAL_HOST=ctf.communitygrid.dallasmakerspace.org
+      - VIRTUAL_HOST=ctf.dallasmakerspace.org
       - VIRTUAL_PORT=80
     networks:
       - database
@@ -47,3 +67,7 @@ networks:
   bridge:
     external:
       name: bridge
+      
+volumes:
+  dbdata: {}
+  backupdata: {}
